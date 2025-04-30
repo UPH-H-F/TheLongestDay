@@ -1,0 +1,655 @@
+/* --- CSS --- */
+body {
+    margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #333; font-family: 'Arial', sans-serif; overflow: hidden;
+    /* Improve pixel art rendering */
+    image-rendering: -moz-crisp-edges; /* Firefox */
+    image-rendering: -webkit-crisp-edges; /* Chrome, Safari */
+    image-rendering: pixelated; /* Standard */
+    image-rendering: crisp-edges;
+}
+#game-container {
+    position: relative;
+    width: 800px; /* TILE_SIZE * WORLD_WIDTH_TILES */
+    height: 608px; /* TILE_SIZE * WORLD_HEIGHT_TILES */
+    background-color: #3399FF; /* Default to water color */
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+#game-canvas {
+    position: absolute; top: 0; left: 0; background-color: transparent; cursor: default; /* Default cursor */
+     /* Improve pixel art rendering on canvas too */
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+#ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* === UPDATED STATS PANEL STYLES === */
+#stats-panel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    pointer-events: auto;
+    font-size: 13px; /* Slightly smaller font for bars */
+    min-width: 180px; /* Ensure panel is wide enough */
+    z-index: 5; /* Ensure stats are above game canvas but below title */
+}
+.stat-container {
+    margin-bottom: 8px; /* Space between bars */
+    display: flex; /* Arrange label and bar side-by-side */
+    align-items: center; /* Vertically align items */
+    height: 18px; /* Consistent height */
+}
+/* Make last container (Day) have less bottom margin */
+.stat-container:last-child {
+    margin-bottom: 2px;
+}
+.stat-label {
+    width: 50px; /* Fixed width for labels */
+    margin-right: 5px;
+    white-space: nowrap; /* Prevent label wrapping */
+    text-align: right;
+}
+.stat-bar-outer {
+    flex-grow: 1; /* Allow bar to take remaining space */
+    height: 100%;
+    background-color: #555; /* Dark background for the bar track */
+    border-radius: 3px;
+    position: relative; /* Needed for positioning text inside */
+    overflow: hidden; /* Clip the inner bar */
+    border: 1px solid #333; /* Subtle border */
+}
+.stat-bar-inner {
+    height: 100%;
+    border-radius: 3px; /* Match outer radius */
+    /* Ensure inner radius doesn't exceed outer when bar is full */
+     border-top-right-radius: inherit;
+     border-bottom-right-radius: inherit;
+     border-top-left-radius: inherit;
+     border-bottom-left-radius: inherit;
+
+    transition: width 0.2s ease-out; /* Smooth transition for width change */
+    /* Background colors set via specific IDs/Classes */
+}
+#health-bar-inner { background-color: #d9534f; } /* Red */
+#hunger-bar-inner { background-color: #f0ad4e; } /* Orange */
+#thirst-bar-inner { background-color: #5bc0de; } /* Blue */
+#day-bar-inner { background-color: #8cc751; } /* Green */
+
+.stat-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.8); /* Make text readable over bars */
+    z-index: 1; /* Ensure text is above the bar */
+    line-height: 1; /* Prevent extra spacing */
+}
+ /* === END UPDATED STATS PANEL STYLES === */
+
+/* --- Updated Inventory Panel Styles --- */
+#inventory-panel {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    pointer-events: auto;
+    z-index: 5;
+}
+#inventory-slots-container {
+    display: flex;
+    gap: 10px; /* Gap between slots */
+}
+.inventory-slot {
+    width: 50px; /* Keep slot size */
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px solid #555;
+    display: flex; /* Use flex to help center content if needed */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    position: relative; /* Needed for absolute positioning of count */
+    overflow: hidden;
+    box-sizing: border-box;
+    cursor: pointer;
+
+    /* Default: No background sprite */
+    background-image: none;
+    background-repeat: no-repeat;
+    background-position: center center; /* Center sprite within the slot */
+     /* Scale the sprite view (e.g., 16x16 sprite shown as 32x32) */
+    background-size: 32px 32px;
+     /* Keep pixel art crisp */
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+.inventory-slot.selected {
+    border-color: #ffcc00;
+    box-shadow: 0 0 5px #ffcc00;
+}
+/* Hide item name text when sprite is shown */
+.inventory-item-name {
+     display: none; /* Hide by default */
+     font-weight: bold;
+     font-size: 9px;
+     color: #ddd;
+     text-shadow: 1px 1px 1px #000;
+     position: absolute;
+     top: 2px;
+     left: 2px;
+     right: 2px; /* Allow wrapping */
+     text-align: center;
+     word-break: break-word;
+}
+/* Show name only if the slot has the 'no-sprite' class */
+.inventory-slot.no-sprite .inventory-item-name {
+     display: block;
+}
+
+.inventory-count {
+    position: absolute; /* Position relative to slot */
+    bottom: 2px;
+    right: 2px;
+    font-size: 12px;
+    font-weight: bold;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 1px 4px;
+    border-radius: 3px;
+    z-index: 1; /* Ensure count is above icon */
+    pointer-events: none; /* Don't interfere with slot click */
+}
+
+
+/* --- Inventory Navigation Button Styles --- */
+.inv-nav-button {
+    background-color: rgba(255, 255, 255, 0.3);
+    border: 1px solid #888;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    width: 25px;
+    height: 50px;
+    cursor: pointer;
+    border-radius: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    padding: 0;
+}
+.inv-nav-button:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+.inv-nav-button:disabled {
+    background-color: rgba(100, 100, 100, 0.3);
+    color: #aaa;
+    cursor: not-allowed;
+    border-color: #555;
+}
+/* --- End Inventory Styles --- */
+
+#tooltip-area { position: absolute; bottom: 75px; left: 50%; transform: translateX(-50%); background-color: rgba(50, 50, 80, 0.85); color: #e0e0e0; padding: 6px 12px; border-radius: 4px; font-size: 13px; text-align: center; max-width: 60%; display: none; z-index: 10; pointer-events: none; }
+#crafting-panel { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background-color: rgba(0, 0, 0, 0.8); color: white; padding: 15px; border-radius: 5px; display: none; flex-direction: column; gap: 8px; pointer-events: auto; max-height: 80%; overflow-y: auto; z-index: 15; }
+#crafting-panel h3 { margin-top: 0; margin-bottom: 10px; text-align: center; }
+.craft-button { padding: 8px 12px; background-color: #5a5a5a; border: 1px solid #777; color: white; cursor: pointer; text-align: left; border-radius: 3px; font-size: 13px; }
+.craft-button .craft-req { display: block; font-size: 11px; color: #cccccc; margin-top: 3px; }
+.craft-button:hover:not(:disabled) { background-color: #777; }
+.craft-button:disabled { background-color: #444; color: #888; cursor: not-allowed; border-color: #555; }
+#close-crafting { margin-top: 10px; padding: 8px; background-color: #d9534f; border: none; color: white; cursor: pointer; border-radius: 3px; }
+#close-crafting:hover { background-color: #c9302c; }
+#message-box { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.75); color: white; padding: 8px 15px; border-radius: 5px; max-width: 70%; text-align: center; display: none; font-size: 14px; z-index: 10; pointer-events: none; } /* Adjusted top position */
+#interaction-prompt { position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%); background-color: rgba(20, 60, 20, 0.8); color: #e8ffe8; padding: 5px 10px; border-radius: 4px; font-size: 13px; text-align: center; max-width: 50%; display: none; z-index: 10; pointer-events: none; }
+#day-night-indicator { position: absolute; top: 10px; right: 10px; width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; transition: background 1s linear, box-shadow 1s linear; z-index: 5; }
+#game-over { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: none; flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; z-index: 20; }
+#game-over h2 { font-size: 36px; margin-bottom: 15px; }
+#days-survived { font-size: 18px; margin-bottom: 25px; max-width: 80%; text-align: center; }
+#restart-button { padding: 12px 25px; margin-top: 20px; background-color: #8cc751; border: none; color: white; cursor: pointer; font-size: 18px; border-radius: 5px; transition: background-color 0.3s; }
+#restart-button:hover { background-color: #7bb540; }
+
+
+ /* === UPDATED Cool Game Homescreen Styles === */
+#title-screen {
+    /* Existing styles */
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    /* background-color: rgba(0, 0, 0, 0.85); */ /* Remove or comment out old background */
+    display: flex; flex-direction: column;
+    /* justify-content: center; */ /* Change justification */
+    justify-content: space-around; /* Pushes elements apart vertically */
+    align-items: center;
+    color: white;
+    pointer-events: auto;
+    z-index: 20;
+    padding: 40px 20px; /* Add padding */
+    box-sizing: border-box;
+
+    /* New Background - Example: Tropical Sunset Gradient */
+    background: linear-gradient(to bottom, #0b132b, #1c2541 40%, #3a506b 80%, #5bc0de);
+    /* Optional subtle noise texture overlay */
+    background-image:
+        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, #0b132b, #1c2541 40%, #3a506b 80%, #5bc0de);
+    background-size: 1px 1px, 1px 1px, cover; /* Control texture size */
+    text-align: center; /* Center text within flex items */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Cleaner font */
+}
+
+#title-screen h1 {
+    font-size: 6rem; /* Much larger */
+    color: #ffffff; /* Brighter white */
+    font-family: 'Impact', Haettenschweiler, 'Arial Narrow Bold', sans-serif; /* More impactful font */
+    text-shadow:
+        3px 3px 0px rgba(0,0,0,0.5), /* Hard shadow */
+        0 0 25px rgba(91, 192, 222, 0.6); /* Subtle blue glow */
+    margin-bottom: 10px; /* Adjust spacing */
+    letter-spacing: 2px;
+    animation: pulseGlow 3s infinite alternate; /* Add subtle glow animation */
+}
+
+/* Keyframes for title glow */
+@keyframes pulseGlow {
+    from {
+        text-shadow:
+            3px 3px 0px rgba(0,0,0,0.5),
+            0 0 15px rgba(91, 192, 222, 0.4);
+    }
+    to {
+        text-shadow:
+            3px 3px 0px rgba(0,0,0,0.6),
+            0 0 30px rgba(91, 192, 222, 0.8);
+    }
+}
+
+
+#instructions {
+    margin-top: 0; /* Remove top margin if using space-around */
+    max-width: 60%; /* Slightly narrower */
+    font-size: 0.85rem; /* Slightly smaller */
+    line-height: 1.5;
+    background-color: rgba(0, 0, 0, 0.6); /* More solid background */
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    color: #e0e0e0; /* Lighter gray text */
+}
+
+#instructions p {
+    margin: 4px 0;
+}
+
+#instructions b {
+    color: #f0ad4e; /* Orange highlight for keys */
+    font-weight: bold;
+}
+
+ #instructions i { /* Added for title screen italic hint */
+    color: #add8e6; /* Light blue for hints */
+    display: block; /* Put hint on its own line */
+    margin-top: 10px;
+}
+
+/* Container for the main action buttons */
+#title-buttons {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 15px; /* Space between buttons */
+    align-items: center; /* Center buttons horizontally */
+    width: 100%; /* Take full width for centering */
+    margin-top: 20px; /* Add some space above buttons */
+}
+
+/* Common style for title screen buttons */
+/* >>> This style makes the buttons visible by default <<< */
+.title-button {
+    padding: 15px 40px; /* Larger padding */
+    background-color: #3a506b; /* Match background theme */
+    border: 2px solid #8bbcdb; /* Lighter border */
+    color: white;
+    cursor: pointer;
+    font-size: 1.5rem; /* Larger font */
+    font-weight: bold;
+    border-radius: 50px; /* Rounded pill shape */
+    transition: all 0.3s ease;
+    min-width: 250px; /* Ensure buttons have a good width */
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative; /* For potential icon positioning */
+    overflow: hidden; /* For potential effects */
+    pointer-events: auto; /* ***** MAKE SURE BUTTONS ARE CLICKABLE ***** */
+    display: block; /* Ensure button is visible */
+}
+
+.title-button:before { /* Optional: subtle gradient overlay */
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
+    border-radius: inherit;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+
+.title-button:hover {
+    background-color: #5bc0de; /* Brighter color on hover */
+    border-color: #ffffff;
+    color: #1c2541; /* Darker text on hover */
+    transform: translateY(-3px) scale(1.03); /* Slight lift and scale */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    text-shadow: none;
+}
+
+.title-button:hover:before {
+    opacity: 1;
+     background: linear-gradient(to bottom, rgba(255,255,255,0.25), rgba(255,255,255,0));
+}
+
+
+.title-button:active {
+    transform: translateY(1px) scale(1); /* Push down on click */
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Apply the common style to specific buttons */
+#start-button {
+    /* Inherits .title-button */
+     background-color: #8cc751; /* Keep start button green-ish but match style */
+     border-color: #c3e6a5;
+     color: #3b5323;
+}
+#start-button:hover {
+     background-color: #a2ff7d; /* Brighter green on hover */
+     border-color: #ffffff;
+     color: #387d2a;
+}
+
+/* ===== START NEW LEADERBOARD BUTTON STYLE ===== */
+/* Style for the new Leaderboard button on title screen */
+/* >>> This style also ensures the specific button is visible <<< */
+#show-leaderboard-button-title {
+    /* Inherits .title-button base styles */
+    /* Keep its default blue theme or adjust as needed */
+     display: block; /* Explicitly make sure it's displayed */
+     /* Optional: Make it slightly less prominent than Start */
+     /* font-size: 1.3rem;
+     padding: 12px 35px;
+     min-width: 230px; */
+}
+/* ===== END NEW LEADERBOARD BUTTON STYLE ===== */
+/* === END Cool Game Homescreen Styles === */
+
+
+ /* ========= START MERGED LEADERBOARD STYLES (ADAPTED) ========== */
+#leaderboard-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    max-width: 500px;
+    max-height: 80%;
+    /* background-color: rgba(0, 0, 0, 0.9); */ /* Old BG */
+    background-color: rgba(28, 37, 65, 0.95); /* Dark blue background from new theme */
+    border: 2px solid #5bc0de; /* Theme border */
+    box-shadow: 0 0 25px rgba(91, 192, 222, 0.5); /* Theme shadow */
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    /* box-shadow: 0 0 15px rgba(0, 0, 0, 0.7); */ /* Old shadow */
+    z-index: 25; /* Ensure it's above other UI */
+    display: none; /* Initially hidden - JS will change this to 'flex' */
+    flex-direction: column;
+    pointer-events: auto; /* Allow interaction with the panel */
+}
+#leaderboard-panel h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 20px;
+    /* color: #8cc751; */ /* Old color */
+    color: #ffffff; /* Title color matching new theme */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5); /* Title shadow */
+}
+#leaderboard-content {
+     overflow-y: auto; /* Allow scrolling if content exceeds height */
+     margin-bottom: 15px;
+     display: flex;
+     flex-direction: column;
+     gap: 15px; /* Space between sections */
+}
+.leaderboard-section h3 {
+    margin-bottom: 8px;
+    border-bottom: 1px solid #555; /* Keep subtle border */
+    padding-bottom: 5px;
+    font-size: 16px;
+    color: #e0e0e0; /* Lighter text for section titles */
+}
+#leaderboard-panel ol {
+    list-style-type: none;
+    padding-left: 0;
+    margin-left: 0;
+}
+#leaderboard-panel li {
+    /* background-color: rgba(255, 255, 255, 0.05); */ /* Old BG */
+    background-color: rgba(58, 80, 107, 0.4); /* Darker blue list item matching theme */
+    border: 1px solid rgba(91, 192, 222, 0.2); /* Subtle border matching theme */
+    padding: 6px 10px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Vertically align items */
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+ #leaderboard-panel li .rank { font-weight: bold; margin-right: 10px; min-width: 25px; color: #ccc;} /* Ensure rank has space */
+ #leaderboard-panel li .name { flex-grow: 1; margin-right: 10px; word-break: break-all; color: #ffffff;} /* Allow long names to break */
+ #leaderboard-panel li .score { font-weight: bold; margin-right: 10px; color: #f0ad4e; white-space: nowrap; } /* Orange score - matches key hints */
+ #leaderboard-panel li .date { font-size: 11px; color: #aaa; white-space: nowrap; } /* Prevent date wrapping */
+ #leaderboard-panel li:nth-child(odd) {
+     /* background-color: rgba(255, 255, 255, 0.08); */ /* Old BG */
+     background-color: rgba(58, 80, 107, 0.6); /* Slightly different shade for odd */
+ }
+#close-leaderboard {
+     /* Inherit some style from .title-button but make it red */
+     padding: 10px 25px;
+     background-color: #d9534f; /* Red - standard for close/cancel */
+     border: 2px solid #f1b0ad; /* Lighter red border */
+     color: white;
+     cursor: pointer;
+     font-size: 1rem; /* Slightly smaller than main buttons */
+     font-weight: bold;
+     border-radius: 50px; /* Match main button shape */
+     transition: all 0.3s ease;
+     min-width: 150px;
+     text-align: center;
+     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+     margin-top: 10px;
+     align-self: center; /* Center the close button */
+     pointer-events: auto; /* ***** MAKE SURE BUTTON IS CLICKABLE ***** */
+}
+#close-leaderboard:hover {
+     background-color: #c9302c; /* Darker red on hover */
+     border-color: #ffffff;
+     transform: translateY(-2px);
+     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+/* ========= END MERGED LEADERBOARD STYLES ========== */
+
+
+/* === HELP BUTTON STYLE === */
+#help-button {
+    position: absolute;
+    top: 10px;
+    /* Adjust right position to not overlap day/night indicator */
+    right: 75px;
+    width: 30px;
+    height: 30px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 1px solid #ccc;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 28px; /* Center the '?' */
+    text-align: center;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10; /* Above game, below modals */
+    pointer-events: auto; /* Make it clickable */
+    transition: background-color 0.2s;
+}
+#help-button:hover {
+    background-color: rgba(50, 50, 50, 0.8);
+}
+
+/* === HELP PANEL STYLE === */
+#help-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 450px; /* Slightly smaller than leaderboard */
+    max-height: 80%;
+    background-color: rgba(20, 20, 40, 0.92); /* Dark slightly bluish background */
+    border: 1px solid #778899; /* Slate gray border */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    color: #e0e0e0; /* Light gray text */
+    padding: 20px;
+    border-radius: 8px;
+    z-index: 25; /* Above other UI, same level as leaderboard */
+    display: none; /* Initially hidden */
+    flex-direction: column;
+    pointer-events: auto; /* Allow interaction */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px; /* Base font size */
+    line-height: 1.6;
+}
+#help-panel h3 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #ffffff;
+    font-size: 18px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 8px;
+}
+#help-content {
+    overflow-y: auto; /* Scroll if content is too tall */
+    margin-bottom: 15px;
+    padding-right: 5px; /* Space for scrollbar */
+}
+ #help-content p {
+    margin: 6px 0; /* Spacing between paragraphs */
+}
+#help-content b { /* Style for key highlights */
+    color: #f0ad4e; /* Orange highlight */
+    font-weight: bold;
+}
+ #help-content i { /* Style for italics */
+    color: #add8e6; /* Light blue for hints */
+    display: block; /* Put hint on its own line */
+    margin-top: 10px;
+}
+
+#close-help-panel {
+    padding: 8px 20px;
+    background-color: #6c757d; /* Gray close button */
+    border: 1px solid #adb5bd;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+    margin-top: 10px;
+    align-self: center; /* Center the close button */
+}
+#close-help-panel:hover {
+    background-color: #5a6268;
+}
+
+/* === PAUSE POPUP STYLES === */
+#pause-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.85); /* Dark overlay */
+    color: white;
+    padding: 30px 40px;
+    border-radius: 10px;
+    border: 2px solid #aaa;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    z-index: 30; /* High z-index to be on top */
+    display: none; /* Initially hidden */
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    min-width: 250px;
+    pointer-events: auto; /* Allow clicking buttons inside */
+}
+
+#pause-popup h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 2rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+/* Re-use title-button style for consistency, but adjust padding maybe */
+#resume-button {
+    /* Inherits .title-button styles like background, border, font etc. */
+    padding: 12px 35px; /* Slightly smaller padding than start button */
+    min-width: 180px;
+    background-color: #5bc0de; /* Use a different color, maybe blue */
+    border-color: #a3dff2;
+     /* Ensure pointer-events are auto if not inherited */
+     pointer-events: auto;
+}
+#resume-button:hover {
+    background-color: #7cd0e8;
+    border-color: #ffffff;
+    color: #1c2541;
+}
+
+/* Style for the new Main Menu button */
+#main-menu-button {
+     /* Inherits .title-button styles */
+     padding: 12px 35px;
+     min-width: 180px;
+     background-color: #d9534f; /* Red for exit/stop action */
+     border-color: #f1b0ad;
+      /* Ensure pointer-events are auto if not inherited */
+      pointer-events: auto;
+}
+#main-menu-button:hover {
+    background-color: #c9302c;
+    border-color: #ffffff;
+    color: white; /* Keep text white on hover for red */
+}
+/* === END PAUSE POPUP STYLES === */
