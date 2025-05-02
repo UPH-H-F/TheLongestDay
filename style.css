@@ -1,27 +1,52 @@
 /* --- CSS --- */
 body {
-    margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #333; font-family: 'Arial', sans-serif; overflow: hidden;
-    /* Improve pixel art rendering */
-    image-rendering: -moz-crisp-edges; /* Firefox */
-    image-rendering: -webkit-crisp-edges; /* Chrome, Safari */
-    image-rendering: pixelated; /* Standard */
-    image-rendering: crisp-edges;
+    margin: 0;
+    padding: 0;
+    background-color: #333; /* Background for letterboxing */
+    font-family: 'Arial', sans-serif;
+    overflow: hidden; /* Prevent body scrollbars */
+    /* Removed: display: flex, justify-content, align-items, height: 100vh */
+    /* Removed: image-rendering (ilipat sa container/canvas) */
+}
+#viewport-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw; /* Fill viewport width */
+    height: 100vh; /* Fill viewport height */
+    display: flex; /* Use flexbox for easy centering */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    background-color: #333; /* Background color for letterboxing */
+    overflow: hidden; /* Prevent scrollbars inside wrapper */
 }
 #game-container {
     position: relative;
-    width: 800px; /* TILE_SIZE * WORLD_WIDTH_TILES */
-    height: 608px; /* TILE_SIZE * WORLD_HEIGHT_TILES */
-    background-color: #3399FF; /* Default to water color */
+    width: 1440px;
+    height: 896px;
+    background-color: #10afb3; /* <<< BAGONG KULAY NG DAGAT DITO */
     overflow: hidden;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    /* Scaling properties */
+    transform-origin: center center;
+    /* image-rendering properties (optional here, applied to canvas too) */
+    /* image-rendering: pixelated; */
+    /* image-rendering: -moz-crisp-edges; */
+    /* image-rendering: -webkit-optimize-contrast; */
 }
+
 #game-canvas {
-    position: absolute; top: 0; left: 0; background-color: transparent; cursor: default; /* Default cursor */
-     /* Improve pixel art rendering on canvas too */
-    image-rendering: -moz-crisp-edges;
-    image-rendering: -webkit-crisp-edges;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1440px;  /* <<< ITO YUNG KULANG KANINA */
+    height: 896px; /* <<< AT ITO */
+    background-color: transparent;
+    cursor: default;
+    /* Keep pixel art crisp */
     image-rendering: pixelated;
-    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
 }
 #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
@@ -35,8 +60,8 @@ body {
     padding: 10px;
     border-radius: 5px;
     pointer-events: auto;
-    font-size: 13px; /* Slightly smaller font for bars */
-    min-width: 180px; /* Ensure panel is wide enough */
+    font-size: 20px; /* Slightly smaller font for bars */
+    min-width: 240px; /* Ensure panel is wide enough */
     z-index: 5; /* Ensure stats are above game canvas but below title */
 }
 .stat-container {
@@ -50,10 +75,11 @@ body {
     margin-bottom: 2px;
 }
 .stat-label {
-    width: 50px; /* Fixed width for labels */
+    width: 70px; /* Fixed width for labels */
     margin-right: 5px;
     white-space: nowrap; /* Prevent label wrapping */
     text-align: right;
+    font-size: 20px;
 }
 .stat-bar-outer {
     flex-grow: 1; /* Allow bar to take remaining space */
@@ -96,6 +122,7 @@ body {
     text-shadow: 1px 1px 1px rgba(0,0,0,0.8); /* Make text readable over bars */
     z-index: 1; /* Ensure text is above the bar */
     line-height: 1; /* Prevent extra spacing */
+    font-size: 16px;
 }
  /* === END UPDATED STATS PANEL STYLES === */
 
@@ -285,11 +312,11 @@ body {
 
 #instructions {
     margin-top: 0; /* Remove top margin if using space-around */
-    max-width: 60%; /* Slightly narrower */
-    font-size: 0.85rem; /* Slightly smaller */
-    line-height: 1.5;
+    max-width: 65%; /* Slightly narrower */
+    font-size: 1.0rem; /* Slightly smaller */
+    line-height: 1.6;
     background-color: rgba(0, 0, 0, 0.6); /* More solid background */
-    padding: 15px 20px;
+    padding: 20px 25px;
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
@@ -493,6 +520,44 @@ body {
      align-self: center; /* Center the close button */
      pointer-events: auto; /* ***** MAKE SURE BUTTON IS CLICKABLE ***** */
 }
+
+/* Style for the Copy Leaderboard button */
+#copy-leaderboard-button {
+    /* Inherit some style from .title-button or match #close-leaderboard */
+    padding: 10px 25px; /* Match close button */
+    background-color: #5bc0de; /* Blue - info/action color */
+    border: 2px solid #a3dff2; /* Lighter blue border */
+    color: white;
+    cursor: pointer;
+    font-size: 1rem; /* Match close button */
+    font-weight: bold;
+    border-radius: 50px; /* Match main button shape */
+    transition: all 0.3s ease;
+    min-width: 150px; /* Match close button */
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    margin-top: 10px;
+    margin-bottom: 5px; /* Space between copy and close */
+    align-self: center; /* Center the button */
+    pointer-events: auto;
+}
+
+#copy-leaderboard-button:hover {
+    background-color: #31b0d5; /* Darker blue on hover */
+    border-color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+/* Optional: Add a little more space above the copy button if needed */
+/* #leaderboard-content { margin-bottom: 20px; } */
+
+/* Adjust margin for the close button */
+#close-leaderboard {
+    margin-top: 5px; /* Reduce top margin since copy button is above */
+}
+
 #close-leaderboard:hover {
      background-color: #c9302c; /* Darker red on hover */
      border-color: #ffffff;
@@ -534,8 +599,8 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     width: 80%;
-    max-width: 450px; /* Slightly smaller than leaderboard */
-    max-height: 80%;
+    max-width: 480px; /* Slightly smaller than leaderboard */
+    max-height: 85%;
     background-color: rgba(20, 20, 40, 0.92); /* Dark slightly bluish background */
     border: 1px solid #778899; /* Slate gray border */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
@@ -547,7 +612,7 @@ body {
     flex-direction: column;
     pointer-events: auto; /* Allow interaction */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px; /* Base font size */
+    font-size: 16px; /* Base font size */
     line-height: 1.6;
 }
 #help-panel h3 {
@@ -555,7 +620,7 @@ body {
     margin-top: 0;
     margin-bottom: 15px;
     color: #ffffff;
-    font-size: 18px;
+    font-size: 20px;
     border-bottom: 1px solid #555;
     padding-bottom: 8px;
 }
@@ -588,6 +653,50 @@ body {
     transition: background-color 0.2s;
     margin-top: 10px;
     align-self: center; /* Center the close button */
+}
+#close-help-panel:hover {
+    background-color: #5a6268;
+}
+
+/* Style for the new Pause and Main Menu buttons in Help Panel */
+.help-panel-action-button {
+    padding: 8px 20px; /* Match close button padding */
+    border: 1px solid #adb5bd; /* Match close button border */
+    color: white;
+    cursor: pointer;
+    font-size: 14px; /* Match close button font size */
+    border-radius: 5px; /* Match close button radius */
+    transition: background-color 0.2s;
+    margin-top: 8px; /* Add some space above */
+    margin-bottom: 5px; /* Space between action buttons */
+    width: 80%; /* Make buttons wider */
+    max-width: 200px; /* But not too wide */
+    align-self: center; /* Center the buttons */
+}
+
+/* Specific colors for each button */
+#help-pause-button {
+    background-color: #5bc0de; /* Blue, similar to resume button */
+    border-color: #a3dff2;
+}
+#help-pause-button:hover {
+    background-color: #31b0d5;
+}
+
+#help-main-menu-button {
+    background-color: #d9534f; /* Red, similar to main menu button in pause */
+    border-color: #f1b0ad;
+}
+#help-main-menu-button:hover {
+    background-color: #c9302c;
+}
+
+/* Adjust margin for the original close button if needed */
+#close-help-panel {
+     margin-top: 15px; /* Add more space above the final close button */
+     background-color: #6c757d; /* Keep its grey color */
+     width: 80%; /* Match width */
+     max-width: 200px; /* Match width */
 }
 #close-help-panel:hover {
     background-color: #5a6268;
