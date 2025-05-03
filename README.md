@@ -14,8 +14,8 @@ Genre: Survival
 
 ---
 
--   **Submitted by:** [D., H.]
--   **Course/Yr.:** [Your Course/Yr.]
+-   **Submitted by:** D., H.
+-   **Course/Yr.:** BSCS-DS 1
 -   **Date:** May 5, 2025
 -   **Submitted to:** Engr. F.
 -   **Institution:** UPHSD - CCS
