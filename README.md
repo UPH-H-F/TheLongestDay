@@ -475,12 +475,7 @@ function gameLoop(currentTime) {
 
 // Initial call to start the loop (usually after clicking 'Start Game')
 // requestAnimationFrame(gameLoop); // Example placement
-IGNORE_WHEN_COPYING_START
-content_copy
-download
-Use code with caution.
-JavaScript
-IGNORE_WHEN_COPYING_END
+
 
 Caption: Basic structure of the main game loop using requestAnimationFrame, calculating delta time, handling pause state, and separating update logic from rendering.
 
@@ -533,12 +528,7 @@ function updateStats(deltaTime) {
     updateStatsState(stats); // Save updated stats
     updateStatsUI(); // Update display
 }
-IGNORE_WHEN_COPYING_START
-content_copy
-download
-Use code with caution.
-JavaScript
-IGNORE_WHEN_COPYING_END
+
 
 Caption: Example structure for updating player survival statistics, considering environmental factors like shade, water, and time of day, applying penalties, and clamping values.
 
